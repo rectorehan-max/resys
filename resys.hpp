@@ -1,6 +1,6 @@
 // resys - Resource management system, designed for raylib
 // author - rectorehan-max
-// github - 
+// github - https://github.com/rectorehan-max/resys 
 
 /*
 How to set this up?
@@ -21,8 +21,6 @@ How to set this up?
 #include <memory>
 #include <cstddef>
 #include <type_traits>
-
-#include <iostream>
 
 #ifdef RESYS_DEBUG
     #include <iostream>
@@ -49,6 +47,8 @@ public:
 
     virtual void logFailLoad() = 0;
     virtual void logFailUnload() = 0;
+
+    virtual ~Resource() = default;
 };
 
 void defineLoader(const std::function<std::unique_ptr<Resource>(const std::string& name, ResType type)>& loadAction);
