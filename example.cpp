@@ -11,7 +11,7 @@ namespace resys
 {
 
 // defining ResourceType enum class inside of resys namespace
-enum class ResourceType {
+enum class ResType {
     TEXTURE
 };
 
@@ -19,7 +19,7 @@ enum class ResourceType {
 class Texture : public resys::Resource {
 public: 
     Texture(const std::string& name, const std::string& path) :
-          resys::Resource(name, path, resys::ResourceType::TEXTURE) {}
+          resys::Resource(name, path, resys::ResType::TEXTURE) {}
 
     virtual int loadAction() override {
         texture = LoadTexture(path.c_str());
@@ -54,7 +54,7 @@ int main() {
     SetTargetFPS(60);
 
     // defining the loader
-    resys::defineLoader([](const std::string& name, resys::ResourceType type) -> std::unique_ptr<resys::Resource>
+    resys::defineLoader([](const std::string& name, resys::ResType type) -> std::unique_ptr<resys::Resource>
     {
         if (name == "test") {
             return std::move(std::make_unique<resys::Texture>(name, "test.png"));
@@ -63,8 +63,11 @@ int main() {
         }
     });
 
-    resys::Texture* texture_ = dynamic_cast<resys::Texture*>(resys::getRes_("test", resys::ResourceType::TEXTURE));
-    resys::Texture* texture2_ = dynamic_cast<resys::Texture*>(resys::getRes_("test", resys::ResourceType::TEXTURE));
+    resys::Texture* texture_ = dynamic_cast<resys::Texture*>(resys::borrow("test", resys::ResType::TEXTURE));
+    resys::Texture* texture2_ = dynamic_cast<resys::Texture*>(resys::borrow("test", resys::ResType::TEXTURE));
+
+    resys::Texture* texture3_ = resys::borrowAs<resys::Texture>("test", resys::ResType::TEXTURE);
+
     // getting test texture
 
     while (!WindowShouldClose()) {
@@ -76,8 +79,10 @@ int main() {
 
     CloseWindow();
 
-    resys::releaseRes_(texture_);
-    resys::releaseRes_(texture2_);
+    resys::release(texture_);
+    resys::release(texture2_);
+
+    resys::release(texture3_);
     // freeing test texture when the user are equals to 0
 
     return 0;

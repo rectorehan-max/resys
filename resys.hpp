@@ -20,6 +20,9 @@ How to set this up?
 #include <functional>
 #include <memory>
 #include <cstddef>
+#include <type_traits>
+
+#include <iostream>
 
 #ifdef RESYS_DEBUG
     #include <iostream>
@@ -30,16 +33,16 @@ namespace resys
 {
 
 // Define this enum to your liking
-enum class ResourceType;
+enum class ResType;
 
 class Resource {
 protected:
-    Resource(const std::string& name, const std::string& path, resys::ResourceType type);
+    Resource(const std::string& name, const std::string& path, ResType type);
 
 public:
     const std::string name;
     const std::string path;
-    const resys::ResourceType type;
+    const ResType type;
 
     virtual int loadAction() = 0;
     virtual int unloadAction() = 0;
@@ -48,14 +51,29 @@ public:
     virtual void logFailUnload() = 0;
 };
 
-struct Entry {
-    std::unique_ptr<Resource> res_u;
-    size_t users;
-};
+void defineLoader(const std::function<std::unique_ptr<Resource>(const std::string& name, ResType type)>& loadAction);
+Resource* borrow(const std::string& name, ResType type);
+void release(Resource* res_);
 
-void defineLoader(const std::function<std::unique_ptr<Resource>(const std::string& name, ResourceType type)>& loadAction);
-Resource* getRes_(const std::string& name, ResourceType type);
-void releaseRes_(Resource* res_);
+template<typename T>
+T* borrowAs(const std::string& name, ResType type) {
+    Resource* res_ = borrow(name, type);
+
+    static_assert(
+        std::is_base_of_v<Resource, T>,
+        "T must be a child of Resource"
+    );
+
+    T* t_ = nullptr;
+
+    #ifdef RESYS_DEBUG
+        t_ = dynamic_cast<T*>(res_);
+    #else 
+        t_ = static_cast<T*>(res_);
+    #endif
+
+    return t_;
+}
 
 }
 
@@ -67,19 +85,29 @@ void releaseRes_(Resource* res_);
 namespace
 {
 
-std::unordered_map<std::string, resys::Entry> resEntry;
-std::function<std::unique_ptr<resys::Resource>(const std::string& name, resys::ResourceType type)> loader = nullptr;
+struct Entry {
+    std::unique_ptr<resys::Resource> res_u;
+    size_t users;
+};
+
+std::unordered_map<std::string, Entry> resEntry;
+std::function<std::unique_ptr<resys::Resource>(const std::string& name, resys::ResType type)> loader = nullptr;
 
 }
 
 namespace resys
 {
 
-void defineLoader(const std::function<std::unique_ptr<Resource>(const std::string& name, ResourceType type)>& l) {
+Resource::Resource(const std::string& name, const std::string& path, ResType type) :
+                   name(name),
+                   path(path),
+                   type(type) {}
+
+void defineLoader(const std::function<std::unique_ptr<Resource>(const std::string& name, ResType type)>& l) {
     loader = l;
 }
 
-Resource* getRes_(const std::string& name, ResourceType type) {
+Resource* borrow(const std::string& name, ResType type) {
     auto it = resEntry.find(name);
 
     if (it != resEntry.end()) {
@@ -119,14 +147,14 @@ Resource* getRes_(const std::string& name, ResourceType type) {
     entry.users = 1;
 
     #ifdef RESYS_DEBUG
-        RESYS_LOG(name + " Cached, returning ptr.");
+        RESYS_LOG(name + " Cached, returning ptr. | Users: 1");
     #endif
 
     return entry.res_u.get();
 
 }
 
-void releaseRes_(Resource* res_) {
+void release(Resource* res_) {
     if (!res_) return;
 
     auto it = resEntry.find(res_->name);
@@ -156,10 +184,6 @@ void releaseRes_(Resource* res_) {
     }
 }
 
-Resource::Resource(const std::string& name, const std::string& path, resys::ResourceType type) :
-                   name(name),
-                   path(path),
-                   type(type) {}
 
 }
 
