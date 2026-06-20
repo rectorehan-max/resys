@@ -33,14 +33,14 @@ public:
 
     // overiding virtual functions inherited from resys::Resource
 
-    virtual int loadAction() override { // load action for the resource. return 0 if succesful, != 0 if not succesful.
+    virtual bool loadAction() override { // load action for the resource. return true if successful.
         texture = LoadTexture(path.c_str());
-        return 0; // for the example, we will always return 0 (succesful)
+        return true;
     }
 
-    virtual int unloadAction() override { // unload action for the resource
+    virtual bool unloadAction() override { // unload action for the resource
         UnloadTexture(texture);
-        return 0;
+        return true;
     }
 
     virtual void logFailLoad() override {

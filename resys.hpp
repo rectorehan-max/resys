@@ -42,8 +42,8 @@ public:
     const std::string path;
     const ResType type;
 
-    virtual int loadAction() = 0;
-    virtual int unloadAction() = 0;
+    virtual bool loadAction() = 0;
+    virtual bool unloadAction() = 0;
 
     virtual void logFailLoad() = 0;
     virtual void logFailUnload() = 0;
@@ -135,9 +135,7 @@ Resource* borrow(const std::string& name, ResType type) {
         return nullptr;
     }
 
-    int result = r_u->loadAction();
-
-    if (result != 0) {
+    if (!r_u->loadAction())  {
         r_u->logFailLoad();
         return nullptr;
     }
@@ -171,12 +169,11 @@ void release(Resource* res_) {
 
         int result = it->second.res_u->unloadAction();
 
-        if (result != 0) {
+        if (!it->second.res_u->unloadAction()) {
             it->second.res_u->logFailUnload();
         }
 
         resEntry.erase(it);
-
 
         #ifdef RESYS_DEBUG
             RESYS_LOG(res_->name + " Released");
