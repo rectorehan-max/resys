@@ -35,11 +35,10 @@ enum class ResType;
 
 class Resource {
 protected:
-    Resource(const std::string& name, const std::string& path, ResType type);
+    Resource(const std::string& name, ResType type);
 
 public:
     const std::string name;
-    const std::string path;
     const ResType type;
 
     virtual bool loadAction() = 0;
@@ -82,25 +81,20 @@ T* borrowAs(const std::string& name, ResType type) {
 
 
 #ifdef RESYS_IMPLEMENTATION
-namespace
+namespace resys
 {
 
 struct Entry {
-    std::unique_ptr<resys::Resource> res_u;
+    std::unique_ptr<Resource> res_u;
     size_t users;
 };
 
 std::unordered_map<std::string, Entry> resEntry;
-std::function<std::unique_ptr<resys::Resource>(const std::string& name, resys::ResType type)> loader = nullptr;
+std::function<std::unique_ptr<Resource>(const std::string& name, ResType type)> loader = nullptr;
 
-}
 
-namespace resys
-{
-
-Resource::Resource(const std::string& name, const std::string& path, ResType type) :
+Resource::Resource(const std::string& name, ResType type) :
                    name(name),
-                   path(path),
                    type(type) {}
 
 void defineLoader(const std::function<std::unique_ptr<Resource>(const std::string& name, ResType type)>& l) {

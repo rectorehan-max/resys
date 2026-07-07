@@ -21,9 +21,11 @@ public:
     TextureImage(const std::string& name, const std::string& path, 
                  int width, int height) :
 
-                 resys::Resource(name, path, resys::ResType::TEXTURE_IMAGE), // calling resys::Resource constructor
+                 resys::Resource(name, resys::ResType::TEXTURE_IMAGE), // calling resys::Resource constructor
+                 path(path),
                  width(width), height(height) {}
 
+    const std::string path;
     const int width; // width of the texture image
     const int height; // height of the texture image
 
@@ -82,7 +84,7 @@ int main() {
         ClearBackground(BLACK);
 
         if (IsKeyPressed(KEY_ENTER)) {
-            resys::release(image2_); // users for test 1 now. and because it's not == 0, test will be be unloaded and deleted
+            resys::release(image2_); // users for test 1 now. and because it's not false, test will be be unloaded and deleted
         }
 
         EndDrawing();
