@@ -161,8 +161,6 @@ void release(Resource* res_) {
 
     if (it->second.users == 0) {
 
-        int result = it->second.res_u->unloadAction();
-
         if (!it->second.res_u->unloadAction()) {
             it->second.res_u->logFailUnload();
         }
